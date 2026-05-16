@@ -1,3 +1,11 @@
+/*
+  Файл index.js является точкой входа в наше приложение
+  и только он должен содержать логику инициализации нашего приложения
+  используя при этом импорты из других файлов
+
+  Из index.js не допускается что то экспортировать
+*/
+import { enableValidation, clearValidation } from "./components/validation.js";
 import {
   getUserInfo,
   getCardList,
@@ -8,13 +16,22 @@ import {
   removeLike,
   updateAvatar,
 } from "./components/api.js";
-import { createCardElement } from "./components/card.js"; // <-- УБРАЛИ deleteCard
+import {
+  createCardElement,
+  removeCardElement,
+  checkIsLiked,
+  updateLikes,
+} from "./components/card.js";
 import {
   openModalWindow,
   closeModalWindow,
   setCloseModalWindowEventListeners,
 } from "./components/modal.js";
 
+// DOM узлы
+const listItemTemplate = document.querySelector(
+  "#popup-info-user-preview-template",
+).content;
 const placesWrap = document.querySelector(".places__list");
 const profileFormModalWindow = document.querySelector(".popup_type_edit");
 const profileForm = profileFormModalWindow.querySelector(".popup__form");
@@ -49,10 +66,19 @@ const removeCardForm = removeCardModalWindow.querySelector(".popup__form");
 const headerLogo = document.querySelector(".header__logo");
 const usersStatsModalWindow = document.querySelector(".popup_type_info");
 const usersStatsModalInfoList =
-  usersStatsModalWindow.querySelector(".popup__info"); // Должно быть .popup__info
+  usersStatsModalWindow.querySelector(".popup__info");
 const infoDefinitionTemplate = document.querySelector(
   "#popup-info-definition-template",
 ).content;
+
+const validationSettings = {
+  formSelector: ".popup__form",
+  inputSelector: ".popup__input",
+  submitButtonSelector: ".popup__button",
+  inactiveButtonClass: "popup__button_disabled",
+  inputErrorClass: "popup__input_type_error",
+  errorClass: "popup__error_visible",
+};
 
 let cardToDeleteElement = null;
 let cardToDeleteId = null;
@@ -79,9 +105,9 @@ const formatDate = (date) =>
 
 const createInfoString = (title, description) => {
   const infoElement = infoDefinitionTemplate
-    .querySelector(".popup__info-item") 
+    .querySelector(".popup__info-item")
     .cloneNode(true);
-  infoElement.querySelector(".popup__info-term").textContent = title; 
+  infoElement.querySelector(".popup__info-term").textContent = title;
   infoElement.querySelector(".popup__info-description").textContent =
     description;
   return infoElement;
@@ -151,19 +177,12 @@ const handleRemoveCardSubmit = (evt) => {
 
   renderLoading(true, submitButton, initialText, "Удаление...");
 
-  removeCard(cardToDeleteId)
-    .then(() => {
-      cardToDeleteElement.remove();
-      closeModalWindow(removeCardModalWindow);
-      cardToDeleteElement = null;
-      cardToDeleteId = null;
-    })
-    .catch((err) => {
-      console.log(err);
-    })
-    .finally(() => {
-      renderLoading(false, submitButton, initialText);
-    });
+  removeCard(cardToDeleteId).then(() => {
+    removeCardElement(cardToDeleteElement);
+    closeModalWindow(removeCardModalWindow);
+    cardToDeleteElement = null;
+    cardToDeleteId = null;
+  });
 };
 
 const handleCardFormSubmit = (evt) => {
@@ -187,7 +206,6 @@ const handleCardFormSubmit = (evt) => {
 
       placesWrap.prepend(cardElement);
       closeModalWindow(cardFormModalWindow);
-      cardForm.reset();
     })
     .catch((err) => {
       console.log(err);
@@ -198,21 +216,18 @@ const handleCardFormSubmit = (evt) => {
 };
 
 const handleLikeCard = (likeButton, cardId, likeCounter) => {
-  const isLiked = likeButton.classList.contains("card__like-button_is-active");
+  const isLiked = checkIsLiked(likeButton);
 
   if (isLiked) {
     removeLike(cardId)
       .then((updatedCard) => {
-        likeButton.classList.remove("card__like-button_is-active"); 
-        likeCounter.textContent = updatedCard.likes.length;
+        updateLikes(likeButton, likeCounter, updatedCard.likes, currentUserId);
       })
       .catch((err) => console.log(err));
   } else {
-    // Если лайка нет — отправляем запрос на добавление
     addLike(cardId)
       .then((updatedCard) => {
-        likeButton.classList.add("card__like-button_is-active");
-        likeCounter.textContent = updatedCard.likes.length;
+        updateLikes(likeButton, likeCounter, updatedCard.likes, currentUserId);
       })
       .catch((err) => console.log(err));
   }
@@ -230,12 +245,30 @@ const handleLogoClick = () => {
         0,
       );
 
-      // 3. Находим карточку с максимальным количеством лайков
-      const mostLikedCard = cards.reduce((prev, current) =>
-        prev.likes.length > current.likes.length ? prev : current,
-      );
+      const likesCountByUser = {};
 
-      // Наполняем список данными
+      cards.forEach((card) => {
+        card.likes.forEach((user) => {
+          if (!likesCountByUser[user._id]) {
+            likesCountByUser[user._id] = {
+              name: user.name,
+              count: 0,
+            };
+          }
+          likesCountByUser[user._id].count += 1;
+        });
+      });
+
+      let maxLikesGiven = 0;
+      let championName = "Пока нет лайков";
+
+      for (const userId in likesCountByUser) {
+        if (likesCountByUser[userId].count > maxLikesGiven) {
+          maxLikesGiven = likesCountByUser[userId].count;
+          championName = likesCountByUser[userId].name;
+        }
+      }
+
       usersStatsModalInfoList.append(
         createInfoString("Всего пользователей:", uniqueUsers.size),
       );
@@ -243,13 +276,10 @@ const handleLogoClick = () => {
         createInfoString("Всего лайков:", totalLikes),
       );
       usersStatsModalInfoList.append(
-        createInfoString(
-          "Максимально лайков от одного:",
-          mostLikedCard.likes.length,
-        ),
+        createInfoString("Максимально лайков от одного:", maxLikesGiven),
       );
       usersStatsModalInfoList.append(
-        createInfoString("Чемпион лайков:", mostLikedCard.owner.name),
+        createInfoString("Чемпион лайков:", championName),
       );
 
       // Работаем с заголовком и списком популярных (внизу окна)
@@ -268,10 +298,11 @@ const handleLogoClick = () => {
         .slice(0, 3);
 
       topCards.forEach((card) => {
-        const li = document.createElement("li");
-        li.classList.add("popup__list-item", "popup__list-item_type_badge");
-        li.textContent = card.name;
-        popularList.append(li);
+        const liElement = listItemTemplate
+          .querySelector(".popup__list-item")
+          .cloneNode(true);
+        liElement.textContent = card.name;
+        popularList.append(liElement);
       });
 
       openModalWindow(usersStatsModalWindow);
@@ -289,6 +320,7 @@ removeCardForm.addEventListener("submit", handleRemoveCardSubmit);
 headerLogo.addEventListener("click", handleLogoClick);
 
 openProfileFormButton.addEventListener("click", () => {
+  clearValidation(profileForm, validationSettings); // Очистка
   profileTitleInput.value = profileTitle.textContent;
   profileDescriptionInput.value = profileDescription.textContent;
   openModalWindow(profileFormModalWindow);
@@ -296,11 +328,13 @@ openProfileFormButton.addEventListener("click", () => {
 
 profileAvatar.addEventListener("click", () => {
   avatarForm.reset();
+  clearValidation(avatarForm, validationSettings);
   openModalWindow(avatarFormModalWindow);
 });
 
 openCardFormButton.addEventListener("click", () => {
   cardForm.reset();
+  clearValidation(cardForm, validationSettings); // Очистка
   openModalWindow(cardFormModalWindow);
 });
 
@@ -332,13 +366,15 @@ Promise.all([getUserInfo(), getCardList()])
         {
           onPreviewPicture: handlePreviewPicture,
           onLikeIcon: handleLikeCard,
-          onDeleteCard: handleDeleteCard, // <-- НОВАЯ ФУНКЦИЯ
+          onDeleteCard: handleDeleteCard,
         },
         currentUserId,
-      ); // <-- ПЕРЕДАЕМ ТВОЙ ID
+      );
       placesWrap.append(cardElement);
     });
   })
   .catch((err) => {
     console.log(err);
   });
+
+enableValidation(validationSettings);

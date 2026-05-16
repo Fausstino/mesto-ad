@@ -44,26 +44,38 @@
         <div class="popup__content">
           <button type="button" class="popup__close"></button>
           <h3 class="popup__title">Редактировать профиль</h3>
-          <form class="popup__form" name="edit-profile">
-            <label class="popup__label">
-              <input
-                type="text"
-                name="user-name"
-                id="user-name"
-                class="popup__input popup__input_type_name"
-                placeholder="Имя"
-              />
-            </label>
-            <label class="popup__label">
-              <input
-                type="text"
-                name="user-description"
-                id="user-description"
-                class="popup__input popup__input_type_description"
-                placeholder="Занятие"
-              />
-            </label>
-            <button type="submit" class="button popup__button">
+          <form class="popup__form" name="edit-profile" novalidate>
+            <input
+              class="popup__input popup__input_type_name"
+              id="user-name"
+              type="text"
+              name="name"
+              placeholder="Имя"
+              required
+              minlength="2"
+              maxlength="40"
+              pattern="^[a-zA-Zа-яА-ЯёЁ\s\-]+$"
+              data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы"
+            />
+            <span class="popup__error" id="user-name-error"></span>
+
+            <input
+              class="popup__input popup__input_type_description"
+              id="user-description"
+              type="text"
+              name="description"
+              placeholder="О себе"
+              required
+              minlength="2"
+              maxlength="200"
+            />
+            <span class="popup__error" id="user-description-error"></span>
+
+            <button
+              class="popup__button popup__button_disabled"
+              type="submit"
+              disabled
+            >
               Сохранить
             </button>
           </form>
@@ -74,26 +86,38 @@
         <div class="popup__content">
           <button type="button" class="popup__close"></button>
           <h3 class="popup__title">Новое место</h3>
-          <form class="popup__form" name="new-place">
-            <label class="popup__label">
-              <input
-                type="text"
-                name="place-name"
-                id="place-name"
-                class="popup__input popup__input_type_card-name"
-                placeholder="Название"
-              />
-            </label>
-            <label class="popup__label">
-              <input
-                type="url"
-                name="place-link"
-                id="place-link"
-                class="popup__input popup__input_type_url"
-                placeholder="Ссылка на картинку"
-              />
-            </label>
-            <button type="submit" class="button popup__button">Создать</button>
+          <form class="popup__form" name="new-place" novalidate>
+            <input
+              class="popup__input popup__input_type_card-name"
+              id="place-name"
+              type="text"
+              name="place-name"
+              placeholder="Название"
+              required
+              minlength="2"
+              maxlength="30"
+              pattern="^[a-zA-Zа-яА-ЯёЁ\s\-]+$"
+              data-error-message="Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы"
+            />
+            <span class="popup__error" id="place-name-error"></span>
+
+            <input
+              class="popup__input popup__input_type_url"
+              id="place-link"
+              type="url"
+              name="link"
+              placeholder="Ссылка на картинку"
+              required
+            />
+            <span class="popup__error" id="place-link-error"></span>
+
+            <button
+              class="popup__button popup__button_disabled"
+              type="submit"
+              disabled
+            >
+              Создать
+            </button>
           </form>
         </div>
       </div>
@@ -120,17 +144,22 @@
         <div class="popup__content">
           <button type="button" class="popup__close"></button>
           <h3 class="popup__title">Обновить аватар</h3>
-          <form class="popup__form" name="edit-avatar">
-            <label class="popup__label">
-              <input
-                type="url"
-                name="user-avatar"
-                id="user-avatar"
-                class="popup__input popup__input_type_avatar"
-                placeholder="Ссылка на изображение"
-              />
-            </label>
-            <button type="submit" class="button popup__button">
+          <form class="popup__form" name="edit-avatar" novalidate>
+            <input
+              class="popup__input popup__input_type_avatar"
+              id="user-avatar"
+              type="url"
+              name="avatar"
+              placeholder="Ссылка на аватар"
+              required
+            />
+            <span class="popup__error" id="user-avatar-error"></span>
+
+            <button
+              class="popup__button popup__button_disabled"
+              type="submit"
+              disabled
+            >
               Сохранить
             </button>
           </form>
@@ -149,7 +178,7 @@
       </div>
     </div>
 
-    <script src="./src/scripts/index.js" defer type="module"></script>
+    <script type="module" src="./src/scripts/index.js"></script>
 
     <template id="card-template">
       <li class="places__item card">

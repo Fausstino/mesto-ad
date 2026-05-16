@@ -2,7 +2,7 @@ export const likeCard = (likeButton) => {
   likeButton.classList.toggle("card__like-button_is-active");
 };
 
-export const deleteCard = (cardElement) => {
+export const removeCardElement = (cardElement) => {
   cardElement.remove();
 };
 
@@ -61,4 +61,24 @@ export const createCardElement = (
   }
 
   return cardElement;
+};
+
+export const checkIsLiked = (likeButton) => {
+  return likeButton.classList.contains("card__like-button_is-active");
+};
+
+export const updateLikes = (
+  likeButton,
+  likeCounter,
+  likesArray,
+  currentUserId,
+) => {
+  likeCounter.textContent = likesArray.length;
+  const isLikedByMe = likesArray.some((user) => user._id === currentUserId);
+
+  if (isLikedByMe) {
+    likeButton.classList.add("card__like-button_is-active");
+  } else {
+    likeButton.classList.remove("card__like-button_is-active");
+  }
 };

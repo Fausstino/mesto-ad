@@ -51,7 +51,7 @@ export const removeCard = (cardId) => {
   }).then(getResponseData);
 };
 
-// Поставить лайк
+// Функция постановки лайка
 export const addLike = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "PUT",
@@ -59,7 +59,7 @@ export const addLike = (cardId) => {
   }).then(getResponseData);
 };
 
-// Убирание лайка
+// Функция снятия лайка
 export const removeLike = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "DELETE",
