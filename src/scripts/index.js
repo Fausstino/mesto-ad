@@ -177,12 +177,20 @@ const handleRemoveCardSubmit = (evt) => {
 
   renderLoading(true, submitButton, initialText, "Удаление...");
 
-  removeCard(cardToDeleteId).then(() => {
-    removeCardElement(cardToDeleteElement);
-    closeModalWindow(removeCardModalWindow);
-    cardToDeleteElement = null;
-    cardToDeleteId = null;
-  });
+  removeCard(cardToDeleteId)
+      .then(() => {
+        removeCardElement(cardToDeleteElement);
+        closeModalWindow(removeCardModalWindow);
+        cardToDeleteElement = null;
+        cardToDeleteId = null;
+      })
+      .catch((err) => {
+        console.log(`Ошибка при удалении карточки: ${err}`);
+      })
+      // Добавляем блок finally для возврата текста кнопки
+      .finally(() => {
+        renderLoading(false, submitButton, initialText); 
+      });
 };
 
 const handleCardFormSubmit = (evt) => {
