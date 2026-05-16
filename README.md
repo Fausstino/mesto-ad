@@ -3,4 +3,4 @@
 Для запуска приложения необходимо использовать live-server
 ![изображение live-server](image.png)
 Live-server является расширением VSCode
-https://lawerz25.github.io/mesto-production/
+https://Fausstino.github.io/mesto-production/
